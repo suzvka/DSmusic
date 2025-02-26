@@ -5,7 +5,6 @@
 
 #include <typeinfo>
 #include <numeric>
-#include <regex>
 #include <sstream>
 #include <iostream>
 #include <cmath>
@@ -51,7 +50,7 @@ namespace DS {
 			return;
 		}
 		if (!_dsData.IsArray()) {
-			throw std::runtime_error("不正确的 ds 格式：不是JSON数组");
+			throw DsParserError("不正确的 DS 格式：不是JSON数组");
 		}
 		_allocator = &_dsData.GetAllocator();
 		_hasData = !_dsData.IsNull();
@@ -66,11 +65,13 @@ namespace DS {
 			return;
 		}
 		for (int row = 0; row < getRowCount(); row++) {
-			_phNum.push_back(parseDS<int>("ph_num", row));
+			_phNum	.push_back(parseDS<int>("ph_num", row));
 			_noteSeq.push_back(parseDS<std::string>("note_seq", row));
+			_phSeq	.push_back(parseDS<std::string>("ph_seq", row));
 			_noteDur.push_back(parseDS<float>("note_dur", row));
 			_noteSlur.push_back(parseDS<int>("note_slur", row));
-			_offset.push_back(parseDS<float>("offset", row).at(0));
+			_offset	.push_back(parseDS<float>("offset", row).at(0));
+			_phNum[row] = makePhNum(_phSeq[row]);
 
 			if (!parseDS<float>("ph_dur", row).empty()) {
 				_phTime.push_back(parseDS<float>("ph_dur", row));
@@ -100,22 +101,6 @@ namespace DS {
 				_tension_ticktime.push_back(parseDS<float>("tension_timestep", row).at(0));
 			}
 			_tension.push_back(parseDS<float>("tension", row));
-
-			auto ph_seq = parseDS<std::string>("ph_seq", row);
-
-			ph_seq = makePhSeq(ph_seq, getNoteSlur(row));
-			std::vector<std::string> phSeq;
-			for (auto& ph : ph_seq) {
-				if (ph != "AP" && ph != "SP") {
-					phSeq.push_back(_language + "/" + ph);
-				}
-				else {
-					phSeq.push_back(ph);
-				}
-			}
-
-			_phSeq.push_back(phSeq);
-			_phNum[row] = makePhNum(ph_seq);
 		}
 
 		_isLoad = true;
@@ -255,13 +240,13 @@ namespace DS {
 		updateJSONData();
 	}
 
+	// Todo: 根据音符序列自动修复
 	bool parser::set(
 		const std::vector<std::string>& note_seq,
 		const std::vector<float>& note_dur,
 		const std::vector<int>& note_slur,
 		const std::vector<std::string>& ph_seq,
 		const std::vector<float>& ph_dur,
-		const std::vector<int>& ph_num,
 		float offset,
 		int row
 	) {
@@ -271,13 +256,10 @@ namespace DS {
 		if (note_slur.empty())	throw DsParserError("连音标志为空");
 		if (ph_seq.empty())		throw DsParserError("音素序列为空");
 		if (ph_dur.empty())		throw DsParserError("音素时长为空");
-		if (ph_num.empty())		throw DsParserError("音节划分为空");
 		if (offset < 0)			throw DsParserError("起始时间小于 0");
 
 		if (note_seq.size() != note_dur.size()) throw DsParserError("音符序列与音符时长未对齐");
 		if (note_seq.size() != note_slur.size()) throw DsParserError("音符序列与连音标志未对齐");
-		int ph_sum = std::accumulate(ph_num.begin(), ph_num.end(), 0);
-		if (ph_seq.size() != ph_sum) throw DsParserError("音素数量与音节划分未对齐");
 
 		// 然后保存
 		if (row >= _noteSeq.size())	_noteSeq.insert(_noteSeq.end(), row - _noteSeq.size() + 1, {});
@@ -293,11 +275,11 @@ namespace DS {
 		_noteSlur[row] = note_slur;
 		_phSeq[row] = ph_seq;
 		_phTime[row] = ph_dur;
-		_phNum[row] = ph_num;
+		_phNum[row] = makePhNum(ph_seq);
 		_offset[row] = offset;
 
 		_hasData = true;
-		return false;
+		return true;
 	}
 
 	std::string parser::get()const {
@@ -410,13 +392,8 @@ namespace DS {
 		int num = 1;
 		// 遍历每一个音素
 		for (size_t i = 1; i < ph_seq.size(); ++i) {
-			// 提取音素名称（若含 "/" 则取后半部分）
-			std::string ph = ph_seq[i];
-			std::smatch match;
-			// 正则匹配 "xxx/yyy" 格式，提取 yyy
-			if (std::regex_match(ph, match, std::regex("^.*/(.*)$"))) {
-				ph = match[1].str(); // 取分组1的内容（即后半部分）
-			}
+			// 提取音素名称
+			const std::string& ph = ph_seq[i];
 
 			// 判断是否为元音（使用处理后的 ph）
 			if (is_vowel(ph)) {

@@ -8,19 +8,13 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <stdexcept>
+
 namespace DS {
 
 	static const std::unordered_set<std::string> Vowel = { "a", "o", "e", "ai", "ei","er", "ui", "ao", "ou", "iu", "ie", "an", "en", "in", "ang", "eng", "ing", "ong", "u", "i", "v" ,
 															"iao","ian", "iang","iong","ia", "ie", "iu", "van", "vn", "ve" , "ua", "un","uo", "uai", "ui", "uan", "uang" ,
 															"E" , "En" , "ir" , "i0" ,"SP" , "AP" };
 	bool is_vowel(std::string noteNum);
-
-	class DsParserError : public std::runtime_error {
-	public:
-		explicit DsParserError(const std::string& msg)
-			: std::runtime_error(msg) {}
-	};
 
 	class parser : public music {
 	public:
@@ -57,7 +51,6 @@ namespace DS {
 			const std::vector<int>& note_slur,
 			const std::vector<std::string>& ph_seq,
 			const std::vector<float>& ph_dur,
-			const std::vector<int>& ph_num,
 			float offset = 0,
 			int row = 0
 		);
@@ -72,7 +65,18 @@ namespace DS {
 		int getRowCount() const;
 
 		// 获取音素序列
-		const std::vector<std::string>& getPhSeq(int row) const { return _phSeq.at(row); }
+		const std::vector<std::string>& getPhSeq(int row) const { 
+			std::vector<std::string> out(_phSeq.size());
+			for (int i = 0;i < _phSeq.size();i++) {
+				if (_phSeq[row][i] != "SP" && _phSeq[row][i] != "AP") {
+					out[i] = getLang() + "/" + _phSeq[row][i];
+				}
+				else {
+					out[i] = _phSeq[row][i];
+				}
+			}
+			return out;
+		}
 
 		// 获取每个音节的音素数量序列
 		const std::vector<int>& getPhNum(int row) const { return _phNum.at(row); }
@@ -139,13 +143,6 @@ namespace DS {
 		std::unordered_map<std::string, std::string> _dsPhDic; // 使用的音素字典
 
 		// 内部数据存储
-		// & 必须字段
-		// - 可选字段
-		// 囊括的字段中必选其中一个
-		// A
-		// |
-		// V
-		// 纵列同级
 		std::vector<std::vector<std::string>> _phSeq = {};	// 音素序列
 		std::vector<std::vector<int>> _phNum = {};			// 音节划分
 		std::vector<std::vector<int>> _noteSlur = {};		// 滑音标志
