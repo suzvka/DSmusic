@@ -26,6 +26,8 @@ explicit DsParserError(const std::string& msg): std::runtime_error(msg) {}
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 class music {
 public:
+	virtual ~music() = default;
+
 	// 初始化：解析所有需要的字段并存储在成员变量中
 	// 如果打算多线程加载，请自行在外部加锁
 	virtual	void load() = 0;
@@ -71,25 +73,25 @@ public:
 	virtual int getRowCount() const = 0;
 
 	// 获取音素序列
-	virtual const std::vector<std::string>& getPhSeq(int row) const = 0;
+	virtual std::vector<std::string> getPhSeq(int row) const = 0;
 
 	// 获取每个音节的音素数量序列
-	virtual const std::vector<int>& getPhNum(int row) const = 0;
+	virtual std::vector<int> getPhNum(int row) const = 0;
 
 	// 获取音符序列
-	virtual const std::vector<std::string>& getNoteSeq(int row) const = 0;
+	virtual std::vector<std::string> getNoteSeq(int row) const = 0;
 
 	// 获取音符时长
-	virtual const std::vector<float>& getNoteDur(int row) const = 0;
+	virtual std::vector<float> getNoteDur(int row) const = 0;
 
 	// 获取滑音标志
-	virtual const std::vector<int>& getNoteSlur(int row) const = 0;
+	virtual std::vector<int> getNoteSlur(int row) const = 0;
 
 	// 获取某行的偏移时间
 	virtual float getOffset(int row) const = 0;
 
 	// 获取全部行的偏移时间
-	virtual const std::vector<float>& getOffset() const = 0;
+	virtual std::vector<float> getOffset() const = 0;
 
 	// 获取采样时间
 	virtual float getTickTime(int row = 0) const = 0;

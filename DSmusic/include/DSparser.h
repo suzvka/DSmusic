@@ -65,9 +65,9 @@ namespace DS {
 		int getRowCount() const;
 
 		// 获取音素序列
-		const std::vector<std::string>& getPhSeq(int row) const { 
-			std::vector<std::string> out(_phSeq.size());
-			for (int i = 0;i < _phSeq.size();i++) {
+		std::vector<std::string> getPhSeq(int row) const { 
+			std::vector<std::string> out(_phSeq[row].size());
+			for (int i = 0;i < _phSeq[row].size();i++) {
 				if (_phSeq[row][i] != "SP" && _phSeq[row][i] != "AP") {
 					out[i] = getLang() + "/" + _phSeq[row][i];
 				}
@@ -79,22 +79,22 @@ namespace DS {
 		}
 
 		// 获取每个音节的音素数量序列
-		const std::vector<int>& getPhNum(int row) const { return _phNum.at(row); }
+		std::vector<int> getPhNum(int row) const { return _phNum.at(row); }
 
 		// 获取音符序列
-		const std::vector<std::string>& getNoteSeq(int row) const { return _noteSeq.at(row); }
+		std::vector<std::string> getNoteSeq(int row) const { return _noteSeq.at(row); }
 
 		// 获取音符时长
-		const std::vector<float>& getNoteDur(int row) const { return _noteDur.at(row); }
+		std::vector<float> getNoteDur(int row) const { return _noteDur.at(row); }
 
 		// 获取滑音标志
-		const std::vector<int>& getNoteSlur(int row) const { return _noteSlur.at(row); }
+		std::vector<int> getNoteSlur(int row) const { return _noteSlur.at(row); }
 
 		// 获取某行的偏移时间
-		float getOffset(int row) const override { return _offset.at(row); }
+		float getOffset(int row) const { return _offset.at(row); }
 
 		// 获取全部行的偏移时间
-		const std::vector<float>& getOffset() const override { return _offset; }
+		std::vector<float> getOffset() const { return _offset; }
 
 		// 获取采样时间
 		float getTickTime(int row = 0) const { return _f0_ticktime.at(row); }
@@ -133,8 +133,8 @@ namespace DS {
 		const std::vector<float>& getTension(int row) const { return _tension.at(row); }
 
 	private:
-		bool _isLoad = false; // 已加载
-		bool _hasData = false;
+		bool _isLoad = false;	// 已加载到内存，可调用 get 系列方法读取数据
+		bool _hasData = false;	// 有可用数据，包括 json 对象内的或内存中的
 
 		rapidjson::Document _dsData;  // 保存传入的 ds 文件数据
 		rapidjson::Document::AllocatorType* _allocator = nullptr;

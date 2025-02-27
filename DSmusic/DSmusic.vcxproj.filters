@@ -29,5 +29,6 @@
     <ClCompile Include="src\DSmusic.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\test.cpp" />
   </ItemGroup>
 </Project>
