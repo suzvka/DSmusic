@@ -122,9 +122,9 @@ namespace DS {
 		// 获取气声曲线
 		const std::vector<float>& getBreathiness(int row) const { return _breathiness.at(row); }
 
-		// 设置表现力曲线
+		// 设置发声曲线
 		parser& setVoicing(std::vector<float> data, float offset, int row);
-		// 获取表现力曲线
+		// 获取发声曲线
 		const std::vector<float>& getVoicing(int row) const { return _voicing.at(row); }
 
 		// 设置张力曲线
@@ -162,8 +162,8 @@ namespace DS {
 		std::vector<std::vector<float>> _breathiness = {};  // 气声曲线
 		std::vector<float> _breathiness_ticktime = {};      // 气声采样时间
 
-		std::vector<std::vector<float>> _voicing = {};      // 表现力曲线
-		std::vector<float> _voicing_ticktime = {};          // 表现力采样时间
+		std::vector<std::vector<float>> _voicing = {};      // 发声曲线
+		std::vector<float> _voicing_ticktime = {};          // 发声采样时间
 
 		std::vector<std::vector<float>> _tension = {};      // 张力曲线
 		std::vector<float> _tension_ticktime = {};			// 张力采样时间
