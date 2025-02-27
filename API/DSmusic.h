@@ -119,9 +119,9 @@ public:
 	// 获取气声曲线
 	virtual const std::vector<float>& getBreathiness(int row) const = 0;
 
-	// 设置表现力曲线
+	// 设置发声曲线
 	virtual music& setVoicing(std::vector<float> data, float offset, int row) = 0;
-	// 获取表现力曲线
+	// 获取发声曲线
 	virtual const std::vector<float>& getVoicing(int row) const = 0;
 
 	// 设置张力曲线
