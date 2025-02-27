@@ -154,8 +154,9 @@ namespace DS {
 				else {
 					// 不是首行则进入合并流程
 
-						// 音符时长间隔
+					// 音符时长间隔
 					float note_interval = current_start - (merged_start + merged_total_time);
+					// 音素时长间隔
 					float ph_interval = current_start - (merged_start + std::accumulate(merged_phDur.begin(), merged_phDur.end(), 0.0f));
 
 					// 检查是否可合并（总时间 + 间隔 + 当前行时间 <= maxTimeS）
@@ -227,15 +228,14 @@ namespace DS {
 				i++;
 			}
 		}
-
 		// 更新内部数据
-		_phSeq = std::move(new_phSeq);
-		_phTime = std::move(new_phDur);
-		_phNum = std::move(new_phNum);
-		_noteSlur = std::move(new_noteSlur);
-		_noteDur = std::move(new_noteDur);
-		_offset = std::move(new_offset);
-		_noteSeq = std::move(new_noteSeq);
+		_phSeq		= std::move(new_phSeq);
+		_phTime		= std::move(new_phDur);
+		_phNum		= std::move(new_phNum);
+		_noteSlur	= std::move(new_noteSlur);
+		_noteDur	= std::move(new_noteDur);
+		_offset		= std::move(new_offset);
+		_noteSeq	= std::move(new_noteSeq);
 		// 更新内部 json 对象
 		updateJSONData();
 	}
