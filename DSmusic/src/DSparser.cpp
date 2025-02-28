@@ -72,10 +72,7 @@ namespace DS {
 			_noteSlur.push_back(parseDS<int>("note_slur", row));
 			_offset	.push_back(parseDS<float>("offset", row).at(0));
 			_phNum[row] = makePhNum(_phSeq[row]);
-
-			if (!parseDS<float>("ph_dur", row).empty()) {
-				_phTime.push_back(parseDS<float>("ph_dur", row));
-			}
+			_phTime.push_back(parseDS<float>("ph_dur", row));
 
 			if (!parseDS<float>("f0_timestep", row).empty()) {
 				_f0_ticktime.push_back(parseDS<float>("f0_timestep", row).at(0));
@@ -135,7 +132,7 @@ namespace DS {
 			// 尝试合并从 i 开始的多行
 			for (size_t j = i; j < getRowCount(); ++j) {
 				// 获取当前行的数据
-				const auto& current_phSeq = getPhSeq(j);
+				const auto& current_phSeq = _phSeq[j];
 				const auto& current_phDur = getPhDur(j);
 				const auto& current_noteDur = getNoteDur(j);
 				float current_start = getOffset(j);
@@ -187,11 +184,13 @@ namespace DS {
 					}
 
 					// 合并当前行数据
+					auto row_note_dur = getNoteSeq(j);
+					auto row_note_slur = getNoteSlur(j);
 					merged_phSeq.insert(merged_phSeq.end(), current_phSeq.begin(), current_phSeq.end());
 					merged_noteDur.insert(merged_noteDur.end(), current_noteDur.begin(), current_noteDur.end());
 					merged_phDur.insert(merged_phDur.end(), current_phDur.begin(), current_phDur.end());
-					merged_noteSeq.insert(merged_noteSeq.end(), getNoteSeq(j).begin(), getNoteSeq(j).end());
-					merged_noteSlur.insert(merged_noteSlur.end(), getNoteSlur(j).begin(), getNoteSlur(j).end());
+					merged_noteSeq.insert(merged_noteSeq.end(), row_note_dur.begin(), row_note_dur.end());
+					merged_noteSlur.insert(merged_noteSlur.end(), row_note_slur.begin(), row_note_slur.end());
 
 					merged_total_time += note_interval + current_total;
 				}
