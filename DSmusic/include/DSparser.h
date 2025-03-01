@@ -66,6 +66,9 @@ namespace DS {
 
 		// ªÒ»°“ÙÀÿ–Ú¡–
 		std::vector<std::string> getPhSeq(int row) const { 
+			if (_language.empty()) {
+				return _phSeq[row];
+			}
 			std::vector<std::string> out(_phSeq[row].size());
 			for (int i = 0;i < _phSeq[row].size();i++) {
 				if (_phSeq[row][i] != "SP" && _phSeq[row][i] != "AP") {
