@@ -282,6 +282,13 @@ namespace DS {
 		return true;
 	}
 
+	bool parser::set_syllable(const std::vector<std::string>& syllable_seq){
+
+
+
+		return false;
+	}
+
 	std::string parser::get()const {
 		rapidjson::StringBuffer buffer;
 		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);

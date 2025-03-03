@@ -55,6 +55,10 @@ namespace DS {
 			int row = 0
 		);
 
+		bool set_syllable(
+			const std::vector<std::string>& syllable_seq
+		);
+
 		// ∑¥–Ú¡–ªØ
 		std::string get()const ;
 
