@@ -41,10 +41,9 @@ namespace DS {
 
 	parser::parser(
 		const std::string& json,
-		const std::string& language,
-		const std::unordered_map<std::string, std::string>& ph_map
+		const std::string& language
 	)
-		: _offset(0.0f), _language(language), _dsPhDic(ph_map)
+		: _offset(0.0f), _language(language)
 	{
 		if (_dsData.Parse(json.c_str()).HasParseError()) {
 			return;
@@ -56,9 +55,12 @@ namespace DS {
 		_hasData = !_dsData.IsNull();
 	}
 
-	parser::parser(const std::string& language, const std::unordered_map<std::string, std::string>& ph_map)
-		: _offset(0.0f), _language(language), _dsPhDic(ph_map)
-	{}
+	parser::parser(const std::string& language)
+		: _offset(0.0f), _language(language)
+	{
+		_dsData.Parse("[]");
+		_allocator = &_dsData.GetAllocator();
+	}
 
 	void parser::load() {
 		if (_isLoad) {
@@ -68,7 +70,7 @@ namespace DS {
 			_phNum	.push_back(parseDS<int>("ph_num", row));
 			_noteSeq.push_back(parseDS<std::string>("note_seq", row));
 			_phSeq	.push_back(parseDS<std::string>("ph_seq", row));
-			_noteDur.push_back(parseDS<float>("note_dur", row));
+			_noteTime.push_back(parseDS<float>("note_dur", row));
 			_noteSlur.push_back(parseDS<int>("note_slur", row));
 			_offset	.push_back(parseDS<float>("offset", row).at(0));
 			_phNum[row] = makePhNum(_phSeq[row]);
@@ -152,9 +154,9 @@ namespace DS {
 					// 不是首行则进入合并流程
 
 					// 音符时长间隔
-					float note_interval = current_start - (merged_start + merged_total_time);
+					float note_interval = current_start - (merged_start + merged_total_time) + 0.2;
 					// 音素时长间隔
-					float ph_interval = current_start - (merged_start + std::accumulate(merged_phDur.begin(), merged_phDur.end(), 0.0f));
+					float ph_interval = current_start - (merged_start + std::accumulate(merged_phDur.begin(), merged_phDur.end(), 0.0f) + 0.2);
 
 					// 检查是否可合并（总时间 + 间隔 + 当前行时间 <= maxTimeS）
 					if ((merged_total_time + note_interval + current_total > maxTimeS) ||
@@ -232,7 +234,7 @@ namespace DS {
 		_phTime		= std::move(new_phDur);
 		_phNum		= std::move(new_phNum);
 		_noteSlur	= std::move(new_noteSlur);
-		_noteDur	= std::move(new_noteDur);
+		_noteTime	= std::move(new_noteDur);
 		_offset		= std::move(new_offset);
 		_noteSeq	= std::move(new_noteSeq);
 		// 更新内部 json 对象
@@ -262,23 +264,81 @@ namespace DS {
 
 		// 然后保存
 		if (row >= _noteSeq.size())	_noteSeq.insert(_noteSeq.end(), row - _noteSeq.size() + 1, {});
-		if (row >= _noteDur.size())	_noteDur.insert(_noteDur.end(), row - _noteDur.size() + 1, {});
+		if (row >= _noteTime.size())	_noteTime.insert(_noteTime.end(), row - _noteTime.size() + 1, {});
 		if (row >= _noteSlur.size()) _noteSlur.insert(_noteSlur.end(), row - _noteSlur.size() + 1, {});
 		if (row >= _phSeq.size())	_phSeq.insert(_phSeq.end(), row - _phSeq.size() + 1, {});
 		if (row >= _phTime.size())	_phTime.insert(_phTime.end(), row - _phTime.size() + 1, {});
 		if (row >= _phNum.size())	_phNum.insert(_phNum.end(), row - _phNum.size() + 1, {});
 		if (row >= _offset.size())	_offset.insert(_offset.end(), row - _offset.size() + 1, 0.0f);
 
-		_noteSeq[row] = note_seq;
-		_noteDur[row] = note_dur;
-		_noteSlur[row] = note_slur;
-		_phSeq[row] = ph_seq;
-		_phTime[row] = ph_dur;
-		_phNum[row] = makePhNum(ph_seq);
-		_offset[row] = offset;
+		_noteSeq[row] = note_seq;		saveString("note_seq", note_seq, row);
+		_noteTime[row] = note_dur;		saveString("note_dur", note_dur, row);
+		_noteSlur[row] = note_slur;		saveString("note_slur", note_slur, row);
+		_phSeq[row] = ph_seq;			saveString("ph_seq", ph_seq, row);
+		_phTime[row] = ph_dur;			saveString("ph_dur", ph_dur, row);
+		_phNum[row] = makePhNum(ph_seq);saveString("ph_num", ph_seq, row);
+		_offset[row] = offset;			saveNumber("offset", offset, row);
 
 		_hasData = true;
 		_isLoad = true;
+		_readyCase = true;
+
+		return true;
+	}
+
+	bool parser::set(
+		const std::vector<std::string>& note_seq, 
+		const std::vector<float>& note_dur, 
+		const std::vector<int>& note_slur, 
+		float offset, 
+		int row
+	){
+		// 先检查数据是否合法
+		if (note_seq.empty())	throw DsParserError("音符序列为空");
+		if (note_dur.empty())	throw DsParserError("音符时长为空");
+		if (note_slur.empty())	throw DsParserError("连音标志为空");
+		if (offset < 0)			throw DsParserError("起始时间小于 0");
+
+		// 然后保存
+		if (row >= _noteSeq.size())	_noteSeq.insert(_noteSeq.end(), row - _noteSeq.size() + 1, {});
+		if (row >= _noteTime.size())	_noteTime.insert(_noteTime.end(), row - _noteTime.size() + 1, {});
+		if (row >= _noteSlur.size()) _noteSlur.insert(_noteSlur.end(), row - _noteSlur.size() + 1, {});
+		if (row >= _phSeq.size())	_phSeq.insert(_phSeq.end(), row - _phSeq.size() + 1, {});
+		if (row >= _phTime.size())	_phTime.insert(_phTime.end(), row - _phTime.size() + 1, {});
+		if (row >= _offset.size())	_offset.insert(_offset.end(), row - _offset.size() + 1, 0.0f);
+
+		_noteSeq[row] = note_seq;		saveString("note_seq", note_seq, row);
+		_noteTime[row] = note_dur;		saveString("note_dur", note_dur, row);
+		_noteSlur[row] = note_slur;		saveString("note_slur", note_slur, row);
+		_phSeq[row] = std::vector<std::string>(note_seq.size(), "SP");
+		_phTime[row] = note_dur;		saveString("ph_dur", note_dur, row);
+		_offset[row] = offset;			saveNumber("offset", offset, row);
+
+		// 此时还不是有效 DS
+		_readyCase = true;
+
+		return true;
+	}
+
+	bool parser::set_lyrics(const std::vector<std::string>& ph_seq, const std::vector<float>& ph_dur, int row){
+		if(!_readyCase)			throw DsParserError("没有词格");
+
+		// 先检查数据是否合法
+		if (ph_seq.empty())		throw DsParserError("音素序列为空");
+		if (ph_dur.empty())		throw DsParserError("音素时长为空");
+
+		// 然后保存
+		if (row >= _phSeq.size())	_phSeq.insert(_phSeq.end(), row - _phSeq.size() + 1, {});
+		if (row >= _phTime.size())	_phTime.insert(_phTime.end(), row - _phTime.size() + 1, {});
+		if (row >= _phNum.size())	_phNum.insert(_phNum.end(), row - _phNum.size() + 1, {});
+
+		_phSeq[row] = ph_seq;			saveString("ph_seq", ph_seq, row);
+		_phTime[row] = ph_dur;			saveString("ph_dur", ph_dur, row);
+		_phNum[row] = makePhNum(ph_seq);saveString("ph_num", ph_seq, row);
+
+		_hasData = true;
+		_isLoad = true;
+
 		return true;
 	}
 
@@ -298,6 +358,22 @@ namespace DS {
 
 	int parser::getRowCount() const {
 		return _dsData.GetArray().Size();
+	}
+
+	std::vector<std::string> parser::getPhSeq(int row) const{
+		if (_language.empty()) {
+			return _phSeq[row];
+		}
+		std::vector<std::string> out(_phSeq[row].size());
+		for (int i = 0;i < _phSeq[row].size();i++) {
+			if (_phSeq[row][i] != "SP" && _phSeq[row][i] != "AP") {
+				out[i] = getLang() + "/" + _phSeq[row][i];
+			}
+			else {
+				out[i] = _phSeq[row][i];
+			}
+		}
+		return out;
 	}
 
 	parser& parser::setPitch(std::vector<float> data, float offset, int row) {
@@ -374,24 +450,6 @@ namespace DS {
 			}
 		}
 		return out;
-	}
-
-	std::vector<std::string> parser::getPhonemes(const std::vector<std::string>& phonemeSequence) {
-		std::vector<std::string> parsedResult;
-		// 遍历音素序列
-		for (const auto& phoneme : phonemeSequence) {
-			// 在字典中查找当前音素的解析结果
-			auto it = _dsPhDic.find(phoneme);
-			if (it != _dsPhDic.end()) {
-				// 找到了解析，添加到结果中
-				parsedResult.push_back(_language + "/" + it->second);
-			}
-			else {
-				// 如果没找到，添加原始音素
-				parsedResult.push_back(phoneme);
-			}
-		}
-		return parsedResult;
 	}
 
 	std::vector<int> parser::makePhNum(const std::vector<std::string>& ph_seq) {
@@ -496,26 +554,31 @@ namespace DS {
 	template<typename T>
 	parser& parser::saveString(const std::string& key, const T& value, size_t index) {
 		rapidjson::Value& arr = _dsData.GetArray();
-		rapidjson::Value& obj = arr[index];
 
+		// 确保数组足够大以容纳index
+		if (index >= arr.Size()) {
+			size_t currentSize = arr.Size();
+			for (size_t i = currentSize; i <= index; ++i) {
+				rapidjson::Value newObj(rapidjson::kObjectType); // 创建新对象
+				arr.PushBack(newObj, *_allocator); // 添加到数组
+			}
+		}
+
+		rapidjson::Value& obj = arr[index];
 		rapidjson::Value json_key(key.c_str(), *_allocator);
 
 		if constexpr (std::is_arithmetic_v<T>) {
-			// 如果是单一数字类型，直接转换为字符串
 			std::ostringstream oss;
-			oss << value;  // 流式写入数字
+			oss << value;
 			rapidjson::Value json_val(oss.str().c_str(), *_allocator);
 			obj.AddMember(json_key, json_val, *_allocator);
 		}
-		else if constexpr (std::is_same_v<T, std::vector<int>> || std::is_same_v<T, std::vector<float>> || std::is_same_v<T, std::vector<double>>) {
-			// 如果是数字类型的容器（例如 std::vector<int> 或 std::vector<float>）
+		else if constexpr (std::is_same_v<T, std::vector<int>> || std::is_same_v<T, std::vector<float>> || std::is_same_v<T, std::vector<std::string>>) {
 			std::ostringstream oss;
 			bool first = true;
 			for (const auto& num : value) {
-				if (!first) {
-					oss << " ";  // 在元素之间插入空格
-				}
-				oss << num;  // 流式写入数字
+				if (!first) oss << " ";
+				oss << num;
 				first = false;
 			}
 			rapidjson::Value json_val(oss.str().c_str(), *_allocator);
@@ -565,7 +628,7 @@ namespace DS {
 			// 3. note_dur
 			rowObj.AddMember(
 				"note_dur",
-				rapidjson::Value(vectorToString(_noteDur[row]).c_str(), allocator).Move(),
+				rapidjson::Value(vectorToString(_noteTime[row]).c_str(), allocator).Move(),
 				allocator
 			);
 

@@ -62,6 +62,30 @@ public:
 		int row = 0
 	) = 0;
 
+	// 从内存中加载数据（仅词格）
+	// - 音符序列
+	// - 音符时长
+	// - 连音标志
+	// - 本行起始时间
+	// - 要保存的行
+	virtual bool set(
+		const std::vector<std::string>& note_seq,
+		const std::vector<float>& note_dur,
+		const std::vector<int>& note_slur,
+		float offset = 0,
+		int row = 0
+	) = 0;
+
+	// 设置歌词
+		// - 音素序列
+		// - 音素时长
+		// - 要保存的行
+	virtual bool set_lyrics(
+		const std::vector<std::string>& ph_seq,
+		const std::vector<float>& ph_dur,
+		int row = 0
+	) = 0;
+
 	// 反序列化
 	virtual std::string get()const = 0;
 
@@ -132,13 +156,11 @@ public:
 
 music* get_music(
 	const std::string& json,
-	const std::string& language,
-	const std::unordered_map<std::string, std::string>& ph_map
+	const std::string& language
 );
 
 music* get_music(
-	const std::string& language,
-	const std::unordered_map<std::string, std::string>& ph_map
+	const std::string& language
 );
 
 }

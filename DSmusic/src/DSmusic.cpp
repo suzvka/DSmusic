@@ -4,16 +4,14 @@
 namespace DS {
 	music* get_music(
 		const std::string& json, 
-		const std::string& language, 
-		const std::unordered_map<std::string, std::string>& ph_map
+		const std::string& language
 	){
-		return new parser(json, language, ph_map);
+		return new parser(json, language);
 	}
 	music* get_music(
-		const std::string& language, 
-		const std::unordered_map<std::string, std::string>& ph_map
+		const std::string& language
 	){
-		return new parser(language, ph_map);
+		return new parser(language);
 	}
 }
 

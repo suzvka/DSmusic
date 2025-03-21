@@ -18,15 +18,16 @@ namespace DS {
 
 	class parser : public music {
 	public:
-		// 构造函数
+		// 构造函数------------------------------------
+		
+		// 从已有的完整 DS 结构中提取
 		parser(
 			const std::string& json,
-			const std::string& language,
-			const std::unordered_map<std::string, std::string>& ph_map
+			const std::string& language
 		);
+		// 创建一个空的 DS
 		parser(
-			const std::string& language,
-			const std::unordered_map<std::string, std::string>& ph_map
+			const std::string& language
 		);
 
 		// 初始化：解析所有需要的字段并存储在成员变量中
@@ -35,7 +36,7 @@ namespace DS {
 		// 打包：增加批次处理量，提高 GPU 利用率
 		void pack(float time_s, float maxIntervalS);
 
-		// 从内存中加载数据
+		// 从内存中加载数据（完整）
 		// 返回加载成功与否的标志
 		// - 音符序列
 		// - 音符时长
@@ -55,6 +56,31 @@ namespace DS {
 			int row = 0
 		);
 
+		// 从内存中加载数据（仅词格）
+		// - 音符序列
+		// - 音符时长
+		// - 连音标志
+		// - 本行起始时间
+		// - 要保存的行
+		bool set(
+			const std::vector<std::string>& note_seq,
+			const std::vector<float>& note_dur,
+			const std::vector<int>& note_slur,
+			float offset = 0,
+			int row = 0
+		);
+
+		// 设置歌词
+		// - 音素序列
+		// - 音素时长
+		// - 要保存的行
+		bool set_lyrics(
+			const std::vector<std::string>& ph_seq,
+			const std::vector<float>& ph_dur,
+			int row = 0
+		);
+
+
 		bool set_syllable(
 			const std::vector<std::string>& syllable_seq
 		);
@@ -69,21 +95,7 @@ namespace DS {
 		int getRowCount() const;
 
 		// 获取音素序列
-		std::vector<std::string> getPhSeq(int row) const { 
-			if (_language.empty()) {
-				return _phSeq[row];
-			}
-			std::vector<std::string> out(_phSeq[row].size());
-			for (int i = 0;i < _phSeq[row].size();i++) {
-				if (_phSeq[row][i] != "SP" && _phSeq[row][i] != "AP") {
-					out[i] = getLang() + "/" + _phSeq[row][i];
-				}
-				else {
-					out[i] = _phSeq[row][i];
-				}
-			}
-			return out;
-		}
+		std::vector<std::string> getPhSeq(int row) const;
 
 		// 获取每个音节的音素数量序列
 		std::vector<int> getPhNum(int row) const { return _phNum.at(row); }
@@ -92,7 +104,7 @@ namespace DS {
 		std::vector<std::string> getNoteSeq(int row) const { return _noteSeq.at(row); }
 
 		// 获取音符时长
-		std::vector<float> getNoteDur(int row) const { return _noteDur.at(row); }
+		std::vector<float> getNoteDur(int row) const { return _noteTime.at(row); }
 
 		// 获取滑音标志
 		std::vector<int> getNoteSlur(int row) const { return _noteSlur.at(row); }
@@ -122,32 +134,44 @@ namespace DS {
 		// 设置能量曲线
 		parser& setEnergy(std::vector<float> data, float offset, int row);
 		// 获取能量曲线
-		const std::vector<float>& getEnergy(int row) const { return _energy.at(row); }
+		const std::vector<float>& getEnergy(int row) const { 
+			if (_energy.empty()) return{};
+			return _energy.at(row); 
+		}
 
 		// 设置气声曲线
 		parser& setBreathiness(std::vector<float> data, float offset, int row);
 		// 获取气声曲线
-		const std::vector<float>& getBreathiness(int row) const { return _breathiness.at(row); }
+		const std::vector<float>& getBreathiness(int row) const { 
+			if (_breathiness.empty()) return{};
+			return _breathiness.at(row); 
+		}
 
 		// 设置发声曲线
 		parser& setVoicing(std::vector<float> data, float offset, int row);
 		// 获取发声曲线
-		const std::vector<float>& getVoicing(int row) const { return _voicing.at(row); }
+		const std::vector<float>& getVoicing(int row) const { 
+			if (_voicing.empty()) return{};
+			return _voicing.at(row); 
+		}
 
 		// 设置张力曲线
 		parser& setTension(std::vector<float> data, float offset, int row);
 		// 获取张力曲线
-		const std::vector<float>& getTension(int row) const { return _tension.at(row); }
+		const std::vector<float>& getTension(int row) const { 
+			if (_tension.empty()) return{};
+			return _tension.at(row); 
+		}
 
 	private:
 		bool _isLoad = false;	// 已加载到内存，可调用 get 系列方法读取数据
 		bool _hasData = false;	// 有可用数据，包括 json 对象内的或内存中的
+		bool _readyCase = false;// 词格已就绪
 
 		rapidjson::Document _dsData;  // 保存传入的 ds 文件数据
 		rapidjson::Document::AllocatorType* _allocator = nullptr;
 
 		std::string _language; // 使用的语言
-		std::unordered_map<std::string, std::string> _dsPhDic; // 使用的音素字典
 
 		// 内部数据存储
 		std::vector<std::vector<std::string>> _phSeq = {};	// 音素序列
@@ -156,7 +180,7 @@ namespace DS {
 		std::vector<float> _offset = {};					// 偏移时间
 
 		std::vector<std::vector<std::string>> _noteSeq = {};// 音符序列
-		std::vector<std::vector<float>> _noteDur = {};		// 音符时长
+		std::vector<std::vector<float>> _noteTime = {};		// 音符时长
 
 		std::vector<std::vector<float>> _phTime = {};		// 音素时长序列
 
@@ -186,9 +210,6 @@ namespace DS {
 		// 保存为字符串
 		template<typename T>
 		parser& saveString(const std::string& key, const T& value, size_t index);
-
-		// 利用字典切分音素
-		std::vector<std::string> getPhonemes(const std::vector<std::string>& phonemeSequence);
 
 		// 划分音节
 		std::vector<int> makePhNum(const std::vector<std::string>& ph_seq);
