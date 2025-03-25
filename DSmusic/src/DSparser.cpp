@@ -10,7 +10,7 @@
 #include <cmath>
 
 namespace DS {
-	std::vector<std::string> split(const std::string& str, char delimiter) {
+	std::vector<std::string> split_str(const std::string& str, char delimiter) {
 		std::vector<std::string> tokens;
 		std::stringstream ss(str);
 		std::string token;
@@ -239,6 +239,27 @@ namespace DS {
 		_noteSeq	= std::move(new_noteSeq);
 		// 更新内部 json 对象
 		updateJSONData();
+	}
+
+	std::vector<std::unique_ptr<music>> parser::split() {
+		load();
+		std::vector<std::unique_ptr<music>> out;
+
+		const auto& rows_data = _dsData.GetArray();
+		for (const auto& element : rows_data) {
+			rapidjson::StringBuffer buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+			element.Accept(writer);
+
+			if (buffer.GetSize() == 0) {
+				continue; // 序列化失败处理
+			}
+
+			std::string row_ds = "[" + std::string(buffer.GetString()) + "]";
+			out.emplace_back(get_music(row_ds, _language));
+		}
+
+		return out;
 	}
 
 	// Todo: 根据音符序列自动修复
@@ -515,7 +536,7 @@ namespace DS {
 		}
 
 		// 将值按空格分割成字符串
-		std::vector<std::string> splitValues = split(valueStr, ' ');
+		std::vector<std::string> splitValues = DS::split_str(valueStr, ' ');
 
 		// 将分割后的字符串转换为目标类型并返回
 		std::vector<T> result;

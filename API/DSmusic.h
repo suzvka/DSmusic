@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
+#include <memory>
 
 namespace DS {
 // 自定义的异常类
@@ -40,6 +41,8 @@ public:
 		float time_s, 
 		float maxInterval_s
 	) = 0;
+
+	virtual std::vector<std::unique_ptr<music>> split() = 0;
 
 	// 从内存中加载数据
 	// 返回加载是否完全正确的标志

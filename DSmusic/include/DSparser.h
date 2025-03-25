@@ -36,6 +36,8 @@ namespace DS {
 		// 打包：增加批次处理量，提高 GPU 利用率
 		void pack(float time_s, float maxIntervalS);
 
+		std::vector<std::unique_ptr<music>> split();
+
 		// 从内存中加载数据（完整）
 		// 返回加载成功与否的标志
 		// - 音符序列
