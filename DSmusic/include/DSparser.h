@@ -98,6 +98,7 @@ namespace DS {
 
 		// 获取音素序列
 		std::vector<std::string> getPhSeq(int row) const;
+		std::vector<std::string> getPhSeq_raw(int row) const;
 
 		// 获取每个音节的音素数量序列
 		std::vector<int> getPhNum(int row) const { return _phNum.at(row); }

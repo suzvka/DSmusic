@@ -397,6 +397,10 @@ namespace DS {
 		return out;
 	}
 
+	std::vector<std::string> parser::getPhSeq_raw(int row) const{
+		return _phSeq[row];
+	}
+
 	parser& parser::setPitch(std::vector<float> data, float offset, int row) {
 		if (row >= _f0_seq.size())	_f0_seq.insert(_f0_seq.end(), row - _f0_seq.size() + 1, {});
 		if (row >= _offset.size())	_offset.insert(_offset.end(), row - _noteSeq.size() + 1, 0);

@@ -101,6 +101,9 @@ public:
 	// 获取音素序列
 	virtual std::vector<std::string> getPhSeq(int row) const = 0;
 
+	// 获取原始音素序列
+	virtual std::vector<std::string> getPhSeq_raw(int row) const = 0;
+
 	// 获取每个音节的音素数量序列
 	virtual std::vector<int> getPhNum(int row) const = 0;
 
