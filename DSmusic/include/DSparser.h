@@ -166,6 +166,14 @@ namespace DS {
 			return _tension.at(row); 
 		}
 
+		// 设置口型曲线
+		parser& setMouthOpening(std::vector<float> data, float offset, int row);
+		// 获取口型曲线
+		const std::vector<float>& getMouthOpening(int row) const {
+			if (_mouthOpening.empty()) return{};
+			return _mouthOpening.at(row);
+		}
+
 	private:
 		bool _isLoad = false;	// 已加载到内存，可调用 get 系列方法读取数据
 		bool _hasData = false;	// 有可用数据，包括 json 对象内的或内存中的
@@ -201,6 +209,9 @@ namespace DS {
 
 		std::vector<std::vector<float>> _tension = {};      // 张力曲线
 		std::vector<float> _tension_ticktime = {};			// 张力采样时间
+
+		std::vector<std::vector<float>> _mouthOpening = {}; // 口型曲线
+		std::vector<float> _mouthOpening_ticktime = {};		// 口型采样时间
 
 		// 工具函数----------------------------------------------------------------------------
 

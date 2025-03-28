@@ -158,6 +158,11 @@ public:
 	// 获取张力曲线
 	virtual const std::vector<float>& getTension(int row) const = 0;
 
+	// 设置口型曲线
+	virtual music& setMouthOpening(std::vector<float> data, float offset, int row) = 0;
+	// 获取口型曲线
+	virtual const std::vector<float>& getMouthOpening(int row) const = 0;
+
 };
 
 music* get_music(

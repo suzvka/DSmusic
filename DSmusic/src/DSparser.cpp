@@ -455,6 +455,15 @@ namespace DS {
 		return *this;
 	}
 
+	parser& parser::setMouthOpening(std::vector<float> data, float offset, int row){
+		if (row >= _mouthOpening.size())	_mouthOpening.insert(_mouthOpening.end(), row - _mouthOpening.size() + 1, {});
+		if (row >= _offset.size())	_offset.insert(_offset.end(), row - _noteSeq.size() + 1, 0);
+		_mouthOpening[row] = data;
+		_offset[row] = offset;
+		saveString("mouth_opening", data, row);
+		return *this;
+	}
+
 	std::vector<std::string> parser::makePhSeq(
 		const std::vector<std::string>& ph_seq,
 		const std::vector<int>& note_slur
