@@ -465,6 +465,35 @@ namespace DS {
 		return P_M_conversion(note_ph);
 	}
 
+	const std::vector<float> parser::getPitch(int row) const { 
+		return _f0_seq.at(row); 
+	}
+
+	const std::vector<float> parser::getPitchStep(int row, float step) const{
+		if ((_f0_seq.empty() || _f0_seq.at(row).empty()) && !_noteSeq.at(row).empty()) {
+			return  P_F_conversion(resampling(_noteSeq.at(row), _noteTime.at(row), step));
+		}
+		else return _f0_seq.at(row);
+	}
+
+	const std::vector<float> parser::getMidi(int row) const{
+		if (!_noteSeq.at(row).empty()) {
+			return P_M_conversion(_noteSeq.at(row));
+		}
+		else return {};
+	}
+
+	const std::vector<float> parser::getMidiPh(int row) const{
+		if (_noteSeq.at(row).empty()) return {};
+		std::vector<std::string> note_ph;
+		for (int index = 0;index < _phNum.at(row).size();++index) {
+			for (int i = 0;i < _phNum.at(row)[index];++i) {
+				note_ph.push_back(_noteSeq.at(row)[index]);
+			}
+		}
+		return P_M_conversion(note_ph);
+	}
+
 	const std::vector<float> parser::getMidiStep(int row, float step) const{
 		if (!_noteSeq.at(row).empty()) {
 			return  P_M_conversion(resampling(_noteSeq.at(row), _noteTime.at(row), step));
