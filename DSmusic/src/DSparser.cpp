@@ -136,7 +136,7 @@ namespace DS {
 				// 获取当前行的数据
 				const auto& current_phSeq = _phSeq[j];
 				const auto& current_phDur = getPhDur(j);
-				const auto& current_noteDur = getNoteDur(j);
+				const auto& current_noteDur = getNoteTime(j);
 				float current_start = getOffset(j);
 				float current_total = std::accumulate(current_noteDur.begin(), current_noteDur.end(), 0.0f);
 
@@ -223,7 +223,7 @@ namespace DS {
 				new_phDur.push_back(getPhDur(i));
 				new_phNum.push_back(getPhNum(i));
 				new_noteSlur.push_back(getNoteSlur(i));
-				new_noteDur.push_back(getNoteDur(i));
+				new_noteDur.push_back(getNoteTime(i));
 				new_offset.push_back(getOffset(i));
 				new_noteSeq.push_back(getNoteSeq(i));
 				i++;
@@ -401,6 +401,15 @@ namespace DS {
 		return _phSeq[row];
 	}
 
+	std::vector<float> parser::getNoteDur(int row, float step) const{
+		if (_noteTime.empty() || _noteTime.at(row).empty()) return {};
+		std::vector<float> out;
+		for (auto& time : _noteTime.at(row)) {
+			out.push_back(time / step);
+		}
+		return out;
+	}
+
 	parser& parser::setPitch(std::vector<float> data, float offset, int row) {
 		if (row >= _f0_seq.size())	_f0_seq.insert(_f0_seq.end(), row - _f0_seq.size() + 1, {});
 		if (row >= _offset.size())	_offset.insert(_offset.end(), row - _noteSeq.size() + 1, 0);
@@ -408,6 +417,42 @@ namespace DS {
 		_offset[row] = offset;
 		saveString("f0_seq", data, row);
 		return *this;
+	}
+
+	const std::vector<float> parser::getPitch(int row) const { 
+		return _f0_seq.at(row); 
+	}
+
+	const std::vector<float> parser::getPitchStep(int row, float step) const{
+		if ((_f0_seq.empty() || _f0_seq.at(row).empty()) && !_noteSeq.at(row).empty()) {
+			return  P_F_conversion(resampling(_noteSeq.at(row), _noteTime.at(row), step));
+		}
+		else return _f0_seq.at(row);
+	}
+
+	const std::vector<float> parser::getMidi(int row) const{
+		if (!_noteSeq.at(row).empty()) {
+			return P_M_conversion(_noteSeq.at(row));
+		}
+		else return {};
+	}
+
+	const std::vector<float> parser::getMidiPh(int row) const{
+		if (_noteSeq.at(row).empty()) return {};
+		std::vector<std::string> note_ph;
+		for (int index = 0;index < _phNum.at(row).size();++index) {
+			for (int i = 0;i < _phNum.at(row)[index];++i) {
+				note_ph.push_back(_noteSeq.at(row)[index]);
+			}
+		}
+		return P_M_conversion(note_ph);
+	}
+
+	const std::vector<float> parser::getMidiStep(int row, float step) const{
+		if (!_noteSeq.at(row).empty()) {
+			return  P_M_conversion(resampling(_noteSeq.at(row), _noteTime.at(row), step));
+		}
+		else return {};
 	}
 
 	parser& parser::setPhTime(std::vector<float> data, float offset, int row) {
@@ -623,6 +668,29 @@ namespace DS {
 		}
 
 		return *this;
+	}
+
+	// 重采样
+
+	template<typename T>
+	std::vector<T> parser::resampling(
+		const std::vector<T>& data_seq,
+		const std::vector<float>& element_length_seq,
+		float step
+	) const {
+		if (data_seq.size() != element_length_seq.size() || step <= 0.0f)	return {};
+
+		std::vector<T> resampled;
+		for (size_t i = 0; i < data_seq.size(); ++i) {
+			const float elem_length = element_length_seq[i];
+			if (elem_length <= 0.0f)										continue;
+			const int repeat = static_cast<int>(std::round(elem_length / step));
+			for (int r = 0; r < repeat; ++r) {
+				resampled.push_back(data_seq[i]);
+			}
+		}
+
+		return resampled;
 	}
 
 	template<typename T>

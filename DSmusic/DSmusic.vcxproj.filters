@@ -30,5 +30,8 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\test.cpp" />
+    <ClCompile Include="src\note.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

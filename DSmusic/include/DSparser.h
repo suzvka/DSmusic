@@ -10,11 +10,15 @@
 #include <unordered_set>
 
 namespace DS {
-
-	static const std::unordered_set<std::string> Vowel = { "a", "o", "e", "ai", "ei","er", "ui", "ao", "ou", "iu", "ie", "an", "en", "in", "ang", "eng", "ing", "ong", "u", "i", "v" ,
-															"iao","ian", "iang","iong","ia", "ie", "iu", "van", "vn", "ve" , "ua", "un","uo", "uai", "ui", "uan", "uang" ,
-															"E" , "En" , "ir" , "i0" ,"SP" , "AP" };
-	bool is_vowel(std::string noteNum);
+	static const std::unordered_set<std::string> Vowel = {
+		"a", "ai" ,"ao" ,"an","ang",
+		"o", "ou" ,"ong",
+		"e", "ei" ,"er" ,"en" ,"eng","E"  ,"En" ,
+		"u", "ui" ,"uo" ,"un" ,"ua" ,"uai","ui" ,"uan" ,"uang",
+		"i", "iu" ,"ie" ,"in" ,"ing","iao","ian","iang","iong","ia", "ie", "iu", "ir" , "i0" ,
+		"v", "van","vn" ,"ve" ,
+		"SP", "AP"
+	};
 
 	class parser : public music {
 	public:
@@ -107,7 +111,8 @@ namespace DS {
 		std::vector<std::string> getNoteSeq(int row) const { return _noteSeq.at(row); }
 
 		// 获取音符时长
-		std::vector<float> getNoteDur(int row) const { return _noteTime.at(row); }
+		std::vector<float> getNoteTime(int row) const { return _noteTime.at(row); }
+		std::vector<float> getNoteDur(int row, float step) const;
 
 		// 获取滑音标志
 		std::vector<int> getNoteSlur(int row) const { return _noteSlur.at(row); }
@@ -127,7 +132,11 @@ namespace DS {
 		// 设置音高曲线
 		parser& setPitch(std::vector<float> data, float offset, int row);
 		// 获取音高曲线
-		const std::vector<float>& getPitch(int row) const { return _f0_seq.at(row); }
+		const std::vector<float> getPitch(int row) const;
+		const std::vector<float> getPitchStep(int row, float step) const;
+		const std::vector<float> getMidi(int row) const;
+		const std::vector<float> getMidiPh(int row) const;
+		const std::vector<float> getMidiStep(int row, float step) const;
 
 		// 设置音素时长序列
 		parser& setPhTime(std::vector<float> data, float offset, int row);
@@ -236,6 +245,26 @@ namespace DS {
 		);
 		// 划分音节
 		std::vector<int> makePhNum(const std::vector<int>& ph_num, const std::vector<int>& note_sule);
+
+		// 重采样
+		// - data_seq 数据元素序列
+		// - element_length_seq 每个数据元素所占长度序列
+		// - step 重采样步长
+		template<typename T>
+		std::vector<T> resampling(
+			const std::vector<T>& data_seq,
+			const std::vector<float>& element_length_seq,
+			float step
+		) const;
+
+		std::vector<float> P_F_conversion(
+			const std::vector<std::string>& notes
+		) const;
+
+		std::vector<float> P_M_conversion(
+			const std::vector<std::string>& notes
+		) const;
+
 		void updateJSONData();
 		//------------------------------------------------------------------------
 

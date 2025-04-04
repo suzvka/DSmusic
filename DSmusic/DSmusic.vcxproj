@@ -37,6 +37,7 @@
     </ClCompile>
     <ClCompile Include="src\DSmusic.cpp" />
     <ClCompile Include="src\DSparser.cpp" />
+    <ClCompile Include="src\note.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
