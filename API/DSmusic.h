@@ -42,6 +42,13 @@ public:
 		float maxInterval_s
 	) = 0;
 
+	// 打包：额外连拼音歌词一起打包
+	virtual std::vector<std::string> pack(
+		float time_s,
+		float maxInterval_s,
+		const std::vector<std::string>& word_seq
+	) = 0;
+
 	virtual std::vector<std::unique_ptr<music>> split() = 0;
 
 	// 从内存中加载数据
@@ -89,7 +96,7 @@ public:
 		int row = 0
 	) = 0;
 
-	// 反序列化
+	// 序列化
 	virtual std::string get()const = 0;
 
 	// 是否为空
@@ -111,7 +118,8 @@ public:
 	virtual std::vector<std::string> getNoteSeq(int row) const = 0;
 
 	// 获取音符时长
-	virtual std::vector<float> getNoteDur(int row) const = 0;
+	virtual std::vector<float> getNoteTime(int row) const = 0;
+	virtual std::vector<float> getNoteDur(int row, float step) const = 0;
 
 	// 获取滑音标志
 	virtual std::vector<int> getNoteSlur(int row) const = 0;
@@ -131,7 +139,11 @@ public:
 	// 设置音高曲线
 	virtual music& setPitch(std::vector<float> data, float offset, int row) = 0;
 	// 获取音高曲线
-	virtual const std::vector<float>& getPitch(int row) const = 0;
+	virtual const std::vector<float> getPitch(int row) const = 0; // 直接获取原始基频序列，如果没有则返回空
+	virtual const std::vector<float> getPitchStep(int row, float step) const = 0; // 如果没有原始序列，将音符序列重采样成指定步长的序列
+	virtual const std::vector<float> getMidi(int row) const = 0; // 获取 MIDI 音高序列
+	virtual const std::vector<float> getMidiPh(int row) const = 0; // 获取以当前音素划分的 MIDI 音高序列
+	virtual const std::vector<float> getMidiStep(int row, float step) const = 0; // 根据指定步长重采样成曲线的 MIDI 音高序列
 
 	// 设置音素时长序列
 	virtual music& setPhTime(std::vector<float> data, float offset, int row) = 0;
@@ -139,7 +151,7 @@ public:
 	virtual const std::vector<float>& getPhDur(int row) const = 0;
 
 	// 设置能量曲线
-	virtual music& setEnergy(std::vector<float> data, float offset, int row) = 0;
+	virtual music& setEnergy(std::vector<float> data, float offset, int row) = 0; 
 	// 获取能量曲线
 	virtual const std::vector<float>& getEnergy(int row) const = 0;
 
@@ -174,4 +186,5 @@ music* get_music(
 	const std::string& language
 );
 
+bool is_vowel(std::string noteNum);
 }
